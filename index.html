@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cazador de Patentes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #6e97ff;
+      --found: #7fff6e;
+      --missing: #ff7c6e;
+      --card-radius: 14px;
+      --shadow: 0 4px 18px rgba(0,0,0,0.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.18) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(30,60,180,0.18) 0%, transparent 50%);
+      min-height: 100vh;
+      font-family: 'Nunito', sans-serif;
+      color: #1a2340;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: rgba(255,255,255,0.22);
+      backdrop-filter: blur(12px);
+      border-bottom: 2px solid rgba(255,255,255,0.35);
+      padding: 18px 32px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 2.2rem;
+      letter-spacing: 3px;
+      color: #fff;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+
+    .title span { color: #1a2340; }
+
+    /* ── PROGRESS ── */
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      max-width: 420px;
+    }
+
+    .progress-label {
+      font-weight: 800;
+      font-size: 1rem;
+      white-space: nowrap;
+      color: #fff;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    }
+
+    .progress-bar-bg {
+      flex: 1;
+      height: 14px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 99px;
+      overflow: hidden;
+      border: 1.5px solid rgba(255,255,255,0.5);
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #7fff6e, #3edb2a);
+      border-radius: 99px;
+      transition: width 0.6s cubic-bezier(.4,0,.2,1);
+      box-shadow: 0 0 8px rgba(127,255,110,0.5);
+    }
+
+    /* ── CONTROLS ── */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+      align-items: center;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,0.85);
+      border-radius: 10px;
+      padding: 6px 14px;
+      gap: 8px;
+      border: 2px solid rgba(255,255,255,0.9);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .search-box input {
+      border: none;
+      background: transparent;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      width: 80px;
+      outline: none;
+      color: #1a2340;
+    }
+
+    .search-box input::placeholder { color: #8899bb; }
+
+    .btn-group {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn {
+      padding: 7px 16px;
+      border-radius: 9px;
+      border: 2px solid rgba(255,255,255,0.5);
+      background: rgba(255,255,255,0.25);
+      color: #fff;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.18s;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+
+    .btn:hover { background: rgba(255,255,255,0.45); transform: translateY(-1px); }
+    .btn.active { background: rgba(255,255,255,0.7); color: #1a2340; border-color: #fff; }
+
+    .sort-select {
+      padding: 7px 14px;
+      border-radius: 9px;
+      border: 2px solid rgba(255,255,255,0.5);
+      background: rgba(255,255,255,0.25);
+      color: #fff;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.82rem;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .sort-select option { color: #1a2340; background: #fff; }
+
+    .grid-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.82rem;
+    }
+
+    .grid-control input[type=range] {
+      width: 90px;
+      accent-color: #fff;
+    }
+
+    /* ── GRID ── */
+    main { padding: 28px 24px; }
+
+    #grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(var(--cols, 8), 1fr);
+      transition: grid-template-columns 0.3s;
+    }
+
+    /* ── CARD ── */
+    .card {
+      border-radius: var(--card-radius);
+      padding: 14px 10px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: transform 0.18s, box-shadow 0.18s;
+      border: 2.5px solid rgba(255,255,255,0.45);
+      overflow: hidden;
+    }
+
+    .card.found {
+      background: linear-gradient(145deg, #7fff6e, #5ee84e);
+    }
+
+    .card.missing {
+      background: linear-gradient(145deg, #ff7c6e, #f05a4a);
+    }
+
+    .card:hover {
+      transform: translateY(-4px) scale(1.04);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.22);
+      z-index: 2;
+    }
+
+    .card-number {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.55rem;
+      letter-spacing: 3px;
+      color: #1a2340;
+      line-height: 1;
+    }
+
+    .card-lock {
+      font-size: 1rem;
+      opacity: 0.75;
+    }
+
+    .card-date {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #1a2340;
+      opacity: 0.8;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── TOOLTIP FOTO ── */
+    .photo-tooltip {
+      position: fixed;
+      z-index: 999;
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(0.85) translateY(8px);
+      transition: opacity 0.2s, transform 0.2s;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+      border: 3px solid #fff;
+      width: 220px;
+    }
+
+    .photo-tooltip img {
+      width: 100%;
+      display: block;
+    }
+
+    .photo-tooltip.visible {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(20,40,100,0.55);
+      backdrop-filter: blur(6px);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 20px;
+      padding: 32px 28px;
+      max-width: 380px;
+      width: 90%;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+      animation: popIn 0.28s cubic-bezier(.4,0,.2,1);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.85); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+
+    .modal h2 {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 2rem;
+      letter-spacing: 3px;
+      color: #1a2340;
+      margin-bottom: 6px;
+    }
+
+    .modal p { font-size: 0.9rem; color: #556; margin-bottom: 18px; }
+
+    .modal img {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 14px; right: 18px;
+      background: none; border: none;
+      font-size: 1.4rem; cursor: pointer;
+      color: #889;
+    }
+
+    /* ── CONFETTI CANVAS ── */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── HIGHLIGHT (búsqueda) ── */
+    .card.highlighted {
+      outline: 4px solid #fff;
+      outline-offset: 2px;
+      animation: pulse 1s ease 3;
+    }
+
+    @keyframes pulse {
+      0%, 100% { outline-color: #fff; }
+      50%       { outline-color: #1a2340; }
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      color: rgba(255,255,255,0.8);
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    @media (max-width: 600px) {
+      #grid { --cols: 4 !important; }
+      .title { font-size: 1.5rem; }
+    }
+
+    /* ── HIPER CARDS ── */
+    .card.hiper {
+      background: linear-gradient(145deg, #ffe066, #ffc107);
+      border-color: rgba(255,255,255,0.6);
+    }
+    .card-hiper-label {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      color: #7a4f00;
+      opacity: 0.85;
+      line-height: 1;
+    }
+    .card-hiper-patente {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.05rem;
+      letter-spacing: 2px;
+      color: #1a2340;
+      line-height: 1;
+    }
+    .hiper-counter {
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: #ffe066;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      white-space: nowrap;
+      display: none;
+    }
+    .hiper-counter.visible { display: inline; }
+
+    /* ── CAROUSEL ARROWS ── */
+    .modal-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+    }
+    .modal-arrow {
+      background: #f0f4ff;
+      border: none;
+      border-radius: 10px;
+      width: 42px; height: 42px;
+      font-size: 1.3rem;
+      cursor: pointer;
+      color: #1a2340;
+      transition: background 0.15s, transform 0.15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-arrow:hover { background: #dce6ff; transform: scale(1.08); }
+    .modal-arrow:disabled { opacity: 0.25; cursor: default; transform: none; }
+    .modal-nav-label {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #889;
+    }
+
+    /* ── BTN AGREGAR ── */
+    .btn-agregar { padding: 7px 16px; border-radius: 9px; border: 2px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.9); color: #1a2340; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.82rem; cursor: pointer; transition: all 0.18s; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .btn-agregar:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
+    .tipo-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+    .tipo-btn { padding: 10px 8px; border-radius: 12px; border: 2.5px solid #e0e8ff; background: #f6f8ff; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.85rem; cursor: pointer; color: #667; transition: all 0.18s; text-align: center; }
+    .tipo-btn:hover { border-color: #6e97ff; color: #1a2340; }
+    .tipo-btn.active-normal { background: linear-gradient(135deg,#7fff6e22,#5ee84e11); border-color: #5ee84e; color: #1a6b10; }
+    .tipo-btn.active-hiper  { background: linear-gradient(135deg,#ffe06622,#ffc10711); border-color: #ffc107; color: #7a4f00; }
+    .tipo-btn .tipo-icon { font-size: 1.2rem; display: block; margin-bottom: 3px; }
+    .add-field { margin-bottom: 14px; }
+    .add-field label { display: block; font-size: 0.75rem; font-weight: 800; color: #667; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .add-field input { width: 100%; padding: 9px 13px; border-radius: 10px; border: 2px solid #e0e8ff; font-family: 'Nunito', sans-serif; font-size: 0.92rem; font-weight: 700; color: #1a2340; outline: none; transition: border-color 0.18s, box-shadow 0.18s; background: #f6f8ff; }
+    .add-field input:focus { border-color: #6e97ff; box-shadow: 0 0 0 3px rgba(110,151,255,0.15); background: #fff; }
+    .add-field input::placeholder { color: #aab; font-weight: 600; }
+    .add-hint { font-size: 0.72rem; color: #aab; font-weight: 600; margin-top: 4px; }
+    .add-preview { width: 100%; border-radius: 8px; margin-top: 8px; display: none; box-shadow: 0 3px 10px rgba(0,0,0,0.1); max-height: 110px; object-fit: cover; }
+    .add-preview.visible { display: block; }
+    .btn-hoy { padding: 9px 13px; border-radius: 10px; border: 2px solid #e0e8ff; background: #f6f8ff; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.78rem; color: #6e97ff; cursor: pointer; white-space: nowrap; transition: all 0.18s; }
+    .btn-hoy:hover { background: #6e97ff; color: #fff; border-color: #6e97ff; }
+    .btn-generar { width: 100%; padding: 12px; border-radius: 12px; border: none; background: linear-gradient(135deg, #6e97ff, #4a7aff); color: #fff; font-family: 'Bebas Neue', cursive; font-size: 1.15rem; letter-spacing: 2px; cursor: pointer; margin-top: 4px; transition: all 0.18s; box-shadow: 0 4px 14px rgba(110,151,255,0.35); }
+    .btn-generar:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(110,151,255,0.45); }
+    .add-resultado { margin-top: 16px; background: #f0f4ff; border-radius: 12px; padding: 14px; border: 2px solid #dce6ff; animation: fadeIn 0.25s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+    .add-resultado-label { font-size: 0.7rem; font-weight: 800; color: #6e97ff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 7px; }
+    .add-resultado-code { font-family: 'Courier New', monospace; font-size: 0.8rem; color: #1a2340; background: #fff; border-radius: 8px; padding: 9px 11px; border: 1.5px solid #dce6ff; word-break: break-all; line-height: 1.5; }
+    .btn-copiar-add { width: 100%; margin-top: 9px; padding: 8px; border-radius: 9px; border: 2px solid #6e97ff; background: transparent; color: #6e97ff; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.83rem; cursor: pointer; transition: all 0.18s; display: flex; align-items: center; justify-content: center; gap: 5px; }
+    .btn-copiar-add:hover { background: #6e97ff; color: #fff; }
+    .btn-copiar-add.copied { background: #7fff6e; border-color: #5ee84e; color: #1a6b10; }
+    .add-instruccion { margin-top: 9px; font-size: 0.73rem; color: #889; font-weight: 600; line-height: 1.5; text-align: center; }
+    .add-instruccion strong { color: #1a2340; }
+  </style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<!-- TOOLTIP FOTO -->
+<div class="photo-tooltip" id="tooltip">
+  <img id="tooltip-img" src="" alt="Patente"/>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" id="modal-close">✕</button>
+    <h2 id="modal-title">Patente 000</h2>
+    <p id="modal-date"></p>
+    <img id="modal-img" src="" alt="Patente"/>
+    <div class="modal-nav">
+      <button class="modal-arrow" id="modal-prev">&#8592;</button>
+      <span class="modal-nav-label" id="modal-nav-label"></span>
+      <button class="modal-arrow" id="modal-next">&#8594;</button>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL AGREGAR PATENTE -->
+<div class="modal-overlay" id="panel-overlay">
+  <div class="modal" style="position:relative; max-width:420px;">
+    <button class="modal-close" onclick="document.getElementById('panel-overlay').classList.remove('open')">✕</button>
+    <h2>Agregar Patente</h2>
+    <p style="margin-bottom:18px;">Completá los datos y copiá la línea generada</p>
+    <div class="tipo-toggle">
+      <button class="tipo-btn active-normal" id="btn-tipo-normal" onclick="setTipo('normal')">
+        <span class="tipo-icon">🚗</span>Normal (000–999)
+      </button>
+      <button class="tipo-btn" id="btn-tipo-hiper" onclick="setTipo('hiper')">
+        <span class="tipo-icon">⭐</span>Hipercapicúa
+      </button>
+    </div>
+    <div class="add-field">
+      <label id="add-label-num">Número de patente</label>
+      <input type="text" id="add-num" maxlength="3" placeholder="ej: 123" oninput="limpiarAdd()"/>
+    </div>
+    <div class="add-field">
+      <label>Link de Google Drive</label>
+      <input type="text" id="add-drive" placeholder="https://drive.google.com/file/d/..." oninput="onAddDrive()"/>
+      <div class="add-hint">Pegá el link completo — extraemos el ID automáticamente</div>
+      <img class="add-preview" id="add-preview" src="" alt="Preview"/>
+    </div>
+    <div class="add-field">
+      <label>Fecha de descubrimiento</label>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;">
+        <input type="text" id="add-fecha" placeholder="DD/MM/AAAA" oninput="limpiarAdd()"/>
+        <button class="btn-hoy" onclick="setAddHoy()">📅 Hoy</button>
+      </div>
+    </div>
+    <button class="btn-generar" onclick="generarLinea()">⚡ GENERAR LÍNEA DE CÓDIGO</button>
+    <div class="add-resultado" id="add-resultado" style="display:none">
+      <div class="add-resultado-label">📋 Copiá esta línea en tu código</div>
+      <div class="add-resultado-code" id="add-resultado-code"></div>
+      <button class="btn-copiar-add" id="btn-copiar-add" onclick="copiarAdd()">📋 Copiar al portapapeles</button>
+      <div class="add-instruccion" id="add-instruccion"></div>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-top">
+    <div class="title">Cazador de <span>Patentes</span></div>
+    <div class="progress-wrap">
+      <span class="progress-label" id="progress-label">0 / 1000</span>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+      <span style="font-weight:800;color:#fff;font-size:1rem;white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,0.15)" id="progress-pct">0%</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <!-- Buscar -->
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="text" id="search-input" maxlength="3" placeholder="000–999" />
+    </div>
+
+    <!-- Filtros -->
+    <div class="btn-group">
+      <button class="btn active" data-filter="all">Todas</button>
+      <button class="btn" data-filter="found">Encontradas</button>
+      <button class="btn" data-filter="missing">Faltantes</button>
+      <button class="btn" data-filter="hiper">⭐ Hipercapicúas</button>
+      <span class="hiper-counter" id="hiper-counter">0 Hipers</span>
+    </div>
+
+    <!-- Orden -->
+    <select class="sort-select" id="sort-select">
+      <option value="number">Ordenar: Número</option>
+      <option value="date">Ordenar: Fecha</option>
+    </select>
+
+    <!-- Grilla -->
+    <div class="grid-control">
+      <span>⊞</span>
+      <input type="range" id="cols-range" min="3" max="12" value="8"/>
+      <span id="cols-label">8 col</span>
+    </div>
+
+    <!-- Agregar -->
+    <button class="btn-agregar" onclick="document.getElementById('panel-overlay').classList.add('open')">➕ Agregar</button>
+  </div>
+</header>
+
+<main>
+  <div id="grid"></div>
+</main>
+
+<script>
+  // ══════════════════════════════════════════════
+  // 📌 DATOS DE PATENTES ENCONTRADAS
+  // Para agregar una nueva: "NNN": { id: "ID_DE_DRIVE", fecha: "DD/MM/AAAA" }
+  // ══════════════════════════════════════════════
+  const PATENTES = {
+    "000": { id: "1ykvz9PT-fccrpVn2g9RUrK6TIZgyP9Xl", fecha: "Corregir" },
+    "001": { id: "1Wstzn2KHzMTQ-2rRsxPuXDzbv9lYMihp", fecha: "Corregir" },
+    "002": { id: "1KL8LemG38fu9ajqpSnuUJw5hn1kH0a5q", fecha: "Corregir" },
+    "003": { id: "1m5Gk2Fmkvy7_h_vE5Ps7IEgFGbM9bmAt", fecha: "Corregir" },
+    "004": { id: "194KSCKousNFJJE_rEtFMek5stk4_lNiN", fecha: "Corregir" },
+    "005": { id: "1913nbMo2Lrq4wIsduXwIx3pg7dmFVXoD", fecha: "Corregir" },
+    "006": { id: "12Lt6xr7TcVm-NRp_vcWpYeW2_b8_4iMA", fecha: "Corregir" },
+    "007": { id: "1Sd8heiUPoO38a7ut3UTPhTU0NretnBgl", fecha: "Corregir" },
+    "008": { id: "1CKyxhezCRCCvew8ZF2eaQne8Yskx3PHg", fecha: "Corregir" },
+    "009": { id: "1yJmFPPXcnnes-QDB4UL2nfxio-17GrvA", fecha: "Corregir" },
+    "010": { id: "1ueZxfzSySu5UVvP9eFdiaZk8pwd2WIvD", fecha: "Corregir" },
+    "011": { id: "1ZnfTVOHLCuT9z8sBtWk0dOFy35uFVKra", fecha: "Corregir" },
+    "012": { id: "120znYSX5G9vZn-zl4ZZ24HiPrHA2qK7l", fecha: "Corregir" },
+    "013": { id: "1ThZNbQBow6iXpS1KPsEvt1gLYPQO5JiZ", fecha: "Corregir" },
+    "014": { id: "1QcHftOu-Lyk_mMiq8z66O4puRVcuCW0m", fecha: "Corregir" },
+    "015": { id: "1TRSxadgMhsjCGCR5YpfWpV-h-qAGihjJ", fecha: "Corregir" },
+    "016": { id: "10nKf-3AJKArFAAK45b3yrJPuIGiBdxok", fecha: "Corregir" },
+    "017": { id: "1D90H3OLr3mAk0Kw9x1PzAZ5O_Nt7Yf_6", fecha: "Corregir" },
+    "018": { id: "1XJsnnLDqx-Tl5LH09JMFRkIwYIUd4wkU", fecha: "Corregir" },
+    "019": { id: "1hqMr4ndn5M4qAPDWHW1DdzkKiM1BRAFg", fecha: "Corregir" },
+    "020": { id: "121iiphR9jzPNnVoeOxrLUbrSTvFiQa2b", fecha: "Corregir" },
+    "021": { id: "1nYr91y6H4ghfW_tzVRQCv-U7v8KNBkGV", fecha: "Corregir" },
+    "022": { id: "1cCfrEnmSqSkyf6OXYyGtAffpnIREDfqC", fecha: "Corregir" },
+    "023": { id: "1sWCj7xQMz0im9o5ZGsRmIWYy5NCGIsOv", fecha: "Corregir" },
+    "024": { id: "1ZpTF-Jy2AM7Mr4P-QLMIDraFDEo1Z5Fz", fecha: "Corregir" },
+    "025": { id: "15SfwvXHENK7MLsAB_tHlmyBdWZJ9w5-a", fecha: "Corregir" },
+    "026": { id: "1fLRdFTzn26_cqGYvGcQ56g2jdikYnOfg", fecha: "Corregir" },
+    "027": { id: "1NFaSNbB5xg0dpwShv_AD3AAJeQ-H1XJv", fecha: "Corregir" },
+    "028": { id: "1Ha8-pqyhp1ZBW8oBgtp9RMHxncjmb69l", fecha: "Corregir" },
+    "029": { id: "1TPDBBjwGFvm6ZuKj-EMtui-cLZ7AK7iM", fecha: "Corregir" },
+    "030": { id: "1l1pYEdKCh6WWzzrt-ZsNnVCYyRAqzTUi", fecha: "Corregir" },
+    "031": { id: "1khUolM9gf6whR9fy0euna_kTasYgq3Uh", fecha: "Corregir" },
+    "032": { id: "19I1TradGk0blHwxd9UzxywZ27bmsgj5S", fecha: "Corregir" },
+    "033": { id: "12jGSC8vU811-IOGwefyE5TaltelNYtxd", fecha: "Corregir" },
+    "034": { id: "1WLd-dSHH0EMd6cKSoHrC4SNaxsNAO6s7", fecha: "Corregir" },
+    "035": { id: "1xC1_DtW0YU0InUXtFUxt2xqQJAGXMTSw", fecha: "Corregir" },
+    "036": { id: "1aWkn4YyJ7Y0z0xWWnQUHGWCj5tpPjah2", fecha: "Corregir" },
+    "037": { id: "1uCdkwdkkHAIf1A8Or0orUYCB2lWcOxBU", fecha: "Corregir" },
+    "038": { id: "1CjHCpxdndrpCENHilZtW3ZFEDaOQa_tn", fecha: "Corregir" },
+    "039": { id: "1A17KLg4slpNcG-HXELoyyrQ2xri8qyCm", fecha: "Corregir" },
+    "040": { id: "1bymsri2rXFBSZdDEC6j2XAOdBdpv5PqD", fecha: "Corregir" },
+    "041": { id: "1_R_ldfglPg0xU1BkPAN4km60L8qpmwBI", fecha: "Corregir" },
+    "042": { id: "18xCSxxll67cH2TDpJOkTqeTRLsFMgH0I", fecha: "Corregir" },
+    "043": { id: "1Ojga-4303tNiSWd2-zLTlUPrp1rPg3f7", fecha: "Corregir" },
+    "044": { id: "1j0L_dK6P4-XvpMHe2z5HKma4o4iHAJ2D", fecha: "Corregir" },
+    "045": { id: "18q6N6cA4iybVbbfg2TryGwcjt6Ttsa0U", fecha: "Corregir" },
+    "046": { id: "1FGAv7aMREEiEjYfRKTuQhTWGycKqAJ7K", fecha: "Corregir" },
+    "047": { id: "11tWCLodY79OYhcmdDhWJG5qxslBswgJ7", fecha: "Corregir" },
+    "048": { id: "1vhzutjQcJ0G0b_SpOZ2hbdisqpIfc-nL", fecha: "Corregir" },
+    "049": { id: "19VUWaHU74QybDeprs5q8ePMAV3Y-BAlF", fecha: "Corregir" },
+    "050": { id: "14ufx_bVYcQ9wqKiI8qEbZoyfeedmsabw", fecha: "Corregir" },
+    "051": { id: "1wAiWFqGk5cUgB1GFauL3zfqt4yWTH7aU", fecha: "Corregir" },
+    "052": { id: "11-VGFTIz_tPlDd0Iqq9c8Wb49epESrIb", fecha: "Corregir" },
+    "053": { id: "1k9wRSxvN_5Od3-lB39KmSNT1xfuPrg9S", fecha: "Corregir" },
+    "054": { id: "1fk-hQ9rSLCHjT3gqk3n2No3wH4VKPq2e", fecha: "Corregir" },
+    "055": { id: "1IF_7kZCmoj6J4jwD3YjaPXCHDOhV3WrR", fecha: "Corregir" },
+    "056": { id: "17fnqSOGQtASbTUEwXXkkGLJ7wl83ClvA", fecha: "Corregir" },
+    "057": { id: "1K5HGnuL6pGWopvMguRBU9Qof6KGsSrEq", fecha: "Corregir" },
+    "058": { id: "1JQlaupsx4XAAIrlymlEvtCTL7RxfH0xV", fecha: "Corregir" },
+    "059": { id: "1zxa1JCkA4yQ5iNM7T_fyBg0SdPng5pll", fecha: "Corregir" },
+    "060": { id: "1np5XOgfTUEntLx5Iiwb4grbHYu7dUbDg", fecha: "Corregir" },
+    "061": { id: "1azRo2QZDWJh3vy6KuRjicYueqFq6U6nu", fecha: "Corregir" },
+    "062": { id: "1GjemUhkh-E9vJrn6J-CqbUj88w1Bj5gY", fecha: "Corregir" },
+    "063": { id: "1settJWBWjmvIyC-bv-StQSOAwAI-LBlk", fecha: "Corregir" },
+    "064": { id: "1X64NSSED-uL9jxecEDCDRZAStEG0_jJp", fecha: "Corregir" },
+    "065": { id: "1dP3Dfl2sErzE5_FIaJ1St7cAG0tZiBD8", fecha: "Corregir" },
+    "066": { id: "1w2ZjDywDlcdEv6LheiBkBVyGf9NJgjuL", fecha: "Corregir" },
+    "067": { id: "1pguLx641hDUzCSmvnmATJdbbgPLN30eP", fecha: "10/03/2026" },
+    "068": { id: "1b0wAHkiIKB3QBJ9EwILMSJfdxaAUUAUk", fecha: "10/03/2026" },
+  };
+
+  // ══════════════════════════════════════════════
+  // ⭐ HIPERCAPICÚAS — formato: "LL NNN LL"
+  // Para agregar: { patente: "AB 123 CD", id: "ID_DRIVE", fecha: "DD/MM/AAAA" }
+  // ══════════════════════════════════════════════
+  const HIPERS = [
+    { patente: "AG 363 GA", id: "1t3znhHraX1eF3Ck5cWfqng57XvEzedTz", fecha: "30/03/2025" },
+    { patente: "AF 282 FA", id: "1x1g3c0pSBiOi6dKr9w11I34yu0ew3elQ", fecha: "05/04/2025" },
+    { patente: "AA 171 AA", id: "1LuSa6Pnh0MjoYltz3M06TFmvfvumukme", fecha: "09/06/2025" },
+  ];
+
+  function imgUrl(driveId) {
+    return `https://drive.google.com/thumbnail?id=${driveId}&sz=w1000`;
+  }
+
+  // ══ Estado ══
+  let currentFilter = "all";
+  let currentSort   = "number";
+  let currentCols   = 8;
+
+  // ══ Generar todas las tarjetas ══
+  function allCards() {
+    return Array.from({ length: 1000 }, (_, i) => String(i).padStart(3, "0"));
+  }
+
+  function getFiltered() {
+    let cards = allCards();
+
+    if (currentFilter === "found")   cards = cards.filter(n =>  PATENTES[n]);
+    if (currentFilter === "missing") cards = cards.filter(n => !PATENTES[n]);
+
+    if (currentSort === "date") {
+      cards.sort((a, b) => {
+        const da = PATENTES[a]?.fecha, db = PATENTES[b]?.fecha;
+        if (!da && !db) return a.localeCompare(b);
+        if (!da) return 1;
+        if (!db) return -1;
+        // DD/MM/AAAA → comparable
+        const parse = d => d.split("/").reverse().join("");
+        return parse(da).localeCompare(parse(db));
+      });
+    }
+
+    return cards;
+  }
+
+  // ══ Render ══
+  function render() {
+    const grid = document.getElementById("grid");
+    grid.style.setProperty("--cols", currentCols);
+
+    // Hiper counter visibility
+    const hiperCounter = document.getElementById("hiper-counter");
+    hiperCounter.textContent = `${HIPERS.length} Hiper${HIPERS.length !== 1 ? "s" : ""}`;
+    hiperCounter.classList.toggle("visible", currentFilter === "hiper");
+
+    if (currentFilter === "hiper") {
+      if (HIPERS.length === 0) {
+        grid.innerHTML = `<div class="empty-state">Todavía no hay hipercapicúas ⭐</div>`;
+        return;
+      }
+      grid.innerHTML = HIPERS.map((h, i) => `
+        <div class="card hiper"
+             data-num="hiper-${i}"
+             data-id="${h.id}"
+             data-fecha="${h.fecha}"
+             data-patente="${h.patente}"
+        >
+          <div class="card-hiper-label">Hiper ${i + 1}</div>
+          <div class="card-hiper-patente">${h.patente}</div>
+          <div class="card-lock">🔓</div>
+          <div class="card-date">${h.fecha}</div>
+        </div>`).join("");
+
+      grid.querySelectorAll(".card.hiper").forEach(card => {
+        card.addEventListener("mouseenter", onCardHover);
+        card.addEventListener("mousemove",  onCardMove);
+        card.addEventListener("mouseleave", onCardLeave);
+        card.addEventListener("click",      onHiperClick);
+      });
+      return;
+    }
+
+    const cards = getFiltered();
+    if (cards.length === 0) {
+      grid.innerHTML = `<div class="empty-state">No hay patentes que mostrar 🔍</div>`;
+      return;
+    }
+
+    grid.innerHTML = cards.map(num => {
+      const found = !!PATENTES[num];
+      const data  = PATENTES[num];
+      return `
+        <div class="card ${found ? "found" : "missing"}"
+             data-num="${num}"
+             ${found ? `data-id="${data.id}" data-fecha="${data.fecha}"` : ""}
+        >
+          <div class="card-number">${num}</div>
+          <div class="card-lock">${found ? "🔓" : "🔒"}</div>
+          ${found ? `<div class="card-date">${data.fecha}</div>` : ""}
+        </div>`;
+    }).join("");
+
+    // Eventos hover y click
+    grid.querySelectorAll(".card.found").forEach(card => {
+      card.addEventListener("mouseenter", onCardHover);
+      card.addEventListener("mousemove",  onCardMove);
+      card.addEventListener("mouseleave", onCardLeave);
+      card.addEventListener("click",      onCardClick);
+    });
+
+    updateProgress();
+  }
+
+  // ══ Progreso ══
+  function updateProgress() {
+    const found = Object.keys(PATENTES).length;
+    document.getElementById("progress-label").textContent = `${found} / 1000`;
+    const pct = (found / 1000) * 100;
+    document.getElementById("progress-fill").style.width = `${pct}%`;
+    document.getElementById("progress-pct").textContent = `${pct.toFixed(1)}%`;
+  }
+
+  // ══ Tooltip ══
+  const tooltip   = document.getElementById("tooltip");
+  const tooltipImg = document.getElementById("tooltip-img");
+
+  function onCardHover(e) {
+    const id = e.currentTarget.dataset.id;
+    tooltipImg.src = imgUrl(id);
+    tooltip.classList.add("visible");
+    positionTooltip(e);
+  }
+
+  function onCardMove(e) { positionTooltip(e); }
+
+  function onCardLeave() { tooltip.classList.remove("visible"); }
+
+  function positionTooltip(e) {
+    const x = e.clientX + 16, y = e.clientY + 16;
+    const tw = 220, th = 160;
+    tooltip.style.left = (x + tw > window.innerWidth  ? e.clientX - tw - 8 : x) + "px";
+    tooltip.style.top  = (y + th > window.innerHeight ? e.clientY - th - 8 : y) + "px";
+  }
+
+  // ══ Carousel state ══
+  let carouselList  = []; // array of { title, date, id }
+  let carouselIndex = 0;
+
+  function openModal(list, index) {
+    carouselList  = list;
+    carouselIndex = index;
+    showModalItem();
+    document.getElementById("modal-overlay").classList.add("open");
+  }
+
+  function showModalItem() {
+    const item = carouselList[carouselIndex];
+    document.getElementById("modal-title").textContent = item.title;
+    document.getElementById("modal-date").textContent  = `Encontrada el ${item.date}`;
+    document.getElementById("modal-img").src           = imgUrl(item.id);
+    document.getElementById("modal-nav-label").textContent =
+      `${carouselIndex + 1} / ${carouselList.length}`;
+    document.getElementById("modal-prev").disabled = carouselIndex === 0;
+    document.getElementById("modal-next").disabled = carouselIndex === carouselList.length - 1;
+  }
+
+  document.getElementById("modal-prev").addEventListener("click", () => {
+    if (carouselIndex > 0) { carouselIndex--; showModalItem(); }
+  });
+  document.getElementById("modal-next").addEventListener("click", () => {
+    if (carouselIndex < carouselList.length - 1) { carouselIndex++; showModalItem(); }
+  });
+
+  // keyboard arrows
+  document.addEventListener("keydown", e => {
+    if (!document.getElementById("modal-overlay").classList.contains("open")) return;
+    if (e.key === "ArrowLeft"  && carouselIndex > 0)                        { carouselIndex--; showModalItem(); }
+    if (e.key === "ArrowRight" && carouselIndex < carouselList.length - 1)  { carouselIndex++; showModalItem(); }
+    if (e.key === "Escape") document.getElementById("modal-overlay").classList.remove("open");
+  });
+
+  // ══ Modal al click ══
+  function buildPatentList() {
+    return Object.keys(PATENTES).sort().map(num => ({
+      title: `Patente ${num}`,
+      date:  PATENTES[num].fecha,
+      id:    PATENTES[num].id,
+    }));
+  }
+
+  function buildHiperList() {
+    return HIPERS.map((h, i) => ({
+      title: `Hiper ${i + 1} — ${h.patente}`,
+      date:  h.fecha,
+      id:    h.id,
+    }));
+  }
+
+  function onCardClick(e) {
+    const num  = e.currentTarget.dataset.num;
+    const list = buildPatentList();
+    const idx  = list.findIndex(x => x.title === `Patente ${num}`);
+    openModal(list, idx >= 0 ? idx : 0);
+  }
+
+
+  // ══ Modal Hiper al click ══
+  function onHiperClick(e) {
+    const num  = e.currentTarget.dataset.num;
+    const idx  = parseInt(num.replace("hiper-", ""));
+    openModal(buildHiperList(), idx);
+  }
+
+  document.getElementById("modal-close").addEventListener("click", () => {
+    document.getElementById("modal-overlay").classList.remove("open");
+  });
+  document.getElementById("modal-overlay").addEventListener("click", e => {
+    if (e.target === e.currentTarget)
+      document.getElementById("modal-overlay").classList.remove("open");
+  });
+
+  // ══ Filtros ══
+  document.querySelectorAll(".btn[data-filter]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".btn[data-filter]").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentFilter = btn.dataset.filter;
+      render();
+    });
+  });
+
+  // ══ Orden ══
+  document.getElementById("sort-select").addEventListener("change", e => {
+    currentSort = e.target.value;
+    render();
+  });
+
+  // ══ Grilla ══
+  document.getElementById("cols-range").addEventListener("input", e => {
+    currentCols = +e.target.value;
+    document.getElementById("cols-label").textContent = `${currentCols} col`;
+    document.getElementById("grid").style.setProperty("--cols", currentCols);
+  });
+
+  // ══ Búsqueda ══
+  document.getElementById("search-input").addEventListener("input", e => {
+    const val = e.target.value.trim().padStart(3, "0");
+    if (val.length < 3) return;
+    // Mostrar todas y hacer scroll
+    currentFilter = "all";
+    document.querySelectorAll(".btn[data-filter]").forEach(b =>
+      b.classList.toggle("active", b.dataset.filter === "all"));
+    currentSort = "number";
+    document.getElementById("sort-select").value = "number";
+    render();
+
+    const target = document.querySelector(`.card[data-num="${val}"]`);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      target.classList.add("highlighted");
+      setTimeout(() => target.classList.remove("highlighted"), 3000);
+    }
+  });
+
+  // ══ Confetti ══
+  function launchConfetti() {
+    const canvas = document.getElementById("confetti-canvas");
+    const ctx    = canvas.getContext("2d");
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const pieces = Array.from({ length: 120 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * -canvas.height,
+      r: Math.random() * 8 + 4,
+      d: Math.random() * 6 + 2,
+      color: ["#7fff6e","#ff7c6e","#fff","#ffe066","#6e97ff"][Math.floor(Math.random()*5)],
+      angle: Math.random() * 360,
+      spin:  (Math.random() - 0.5) * 6,
+    }));
+
+    let frame;
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pieces.forEach(p => {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle * Math.PI / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r * 0.5);
+        ctx.restore();
+        p.y    += p.d;
+        p.angle += p.spin;
+        if (p.y > canvas.height) { p.y = -10; p.x = Math.random() * canvas.width; }
+      });
+      frame = requestAnimationFrame(draw);
+    }
+    draw();
+    setTimeout(() => { cancelAnimationFrame(frame); ctx.clearRect(0,0,canvas.width,canvas.height); }, 3000);
+  }
+
+  // ══ Init ══
+  render();
+</script>
+
+<footer style="
+  text-align: center;
+  padding: 32px 24px 40px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.7;
+">
+  <span id="footer-msg"></span>
+</footer>
+
+<script>
+  const found = Object.keys(PATENTES).length;
+  const pct   = ((found / 1000) * 100).toFixed(1);
+  document.getElementById("footer-msg").textContent =
+    `${found} de 1000. El camino es largo, las calles son infinitas y las chances parecen imposibles pero cada patente encontrada es una victoria. No importa cuánto falte: no paramos hasta completar el álbum, Matias Chiffone Guarde. 🚗`;
+</script>
+<script>
+  let addTipo = "normal";
+  function setTipo(t) {
+    addTipo = t;
+    document.getElementById("btn-tipo-normal").className = "tipo-btn" + (t === "normal" ? " active-normal" : "");
+    document.getElementById("btn-tipo-hiper").className  = "tipo-btn" + (t === "hiper"  ? " active-hiper"  : "");
+    document.getElementById("add-label-num").textContent  = t === "normal" ? "Número de patente" : "Patente completa";
+    document.getElementById("add-num").placeholder        = t === "normal" ? "ej: 123" : "ej: AF 282 FA";
+    document.getElementById("add-num").maxLength          = t === "normal" ? 3 : 20;
+    limpiarAdd();
+  }
+  function extractDriveId(url) {
+    const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    return m ? m[1] : null;
+  }
+  function onAddDrive() {
+    limpiarAdd();
+    const url = document.getElementById("add-drive").value.trim();
+    const id  = extractDriveId(url);
+    const preview = document.getElementById("add-preview");
+    if (id) { preview.src = "https://drive.google.com/thumbnail?id=" + id + "&sz=w400"; preview.classList.add("visible"); }
+    else { preview.classList.remove("visible"); }
+  }
+  function setAddHoy() {
+    const hoy = new Date();
+    const d = String(hoy.getDate()).padStart(2,"0");
+    const m = String(hoy.getMonth()+1).padStart(2,"0");
+    document.getElementById("add-fecha").value = d + "/" + m + "/" + hoy.getFullYear();
+    limpiarAdd();
+  }
+  function limpiarAdd() { document.getElementById("add-resultado").style.display = "none"; }
+  function generarLinea() {
+    const num   = document.getElementById("add-num").value.trim();
+    const drive = document.getElementById("add-drive").value.trim();
+    const fecha = document.getElementById("add-fecha").value.trim();
+    if (!num || !drive || !fecha) { alert("Completá todos los campos antes de generar."); return; }
+    const id = extractDriveId(drive);
+    if (!id) { alert("El link de Drive no parece válido."); return; }
+    let linea, instruccion;
+    if (addTipo === "normal") {
+      linea = '"' + num.padStart(3,"0") + '": { id: "' + id + '", fecha: "' + fecha + '" },';
+      instruccion = 'Pegá esta línea dentro de <strong>const PATENTES = { ... }</strong>';
+    } else {
+      linea = '{ patente: "' + num + '", id: "' + id + '", fecha: "' + fecha + '" },';
+      instruccion = 'Pegá esta línea dentro de <strong>const HIPERS = [ ... ]</strong>';
+    }
+    document.getElementById("add-resultado-code").textContent = linea;
+    document.getElementById("add-instruccion").innerHTML = instruccion;
+    document.getElementById("add-resultado").style.display = "block";
+    const btn = document.getElementById("btn-copiar-add");
+    btn.className = "btn-copiar-add";
+    btn.textContent = "📋 Copiar al portapapeles";
+  }
+  function copiarAdd() {
+    const code = document.getElementById("add-resultado-code").textContent;
+    navigator.clipboard.writeText(code).then(() => {
+      const btn = document.getElementById("btn-copiar-add");
+      btn.textContent = "✅ ¡Copiado!";
+      btn.classList.add("copied");
+      setTimeout(() => { btn.textContent = "📋 Copiar al portapapeles"; btn.classList.remove("copied"); }, 2000);
+    });
+  }
+  document.getElementById("panel-overlay").addEventListener("click", function(e) {
+    if (e.target === e.currentTarget) document.getElementById("panel-overlay").classList.remove("open");
+  });
+</script>
+</body>
+</html>
