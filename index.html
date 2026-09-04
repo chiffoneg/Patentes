@@ -550,96 +550,17 @@
 </header>
 
 <main>
-  <div id="grid"></div>
+  <div id="grid"><div class="empty-state">Cargando álbum…</div></div>
 </main>
 
 <script>
   // ══════════════════════════════════════════════
   // 📌 DATOS DE PATENTES ENCONTRADAS
-  // Para agregar una nueva: "NNN": { id: "ID_DE_DRIVE", fecha: "DD/MM/AAAA" }
+  // Ahora viven en data.json (el bot de Telegram los actualiza ahí).
+  // Para agregar una a mano: editá data.json en el repo.
   // ══════════════════════════════════════════════
-  const PATENTES = {
-    "000": { id: "1ykvz9PT-fccrpVn2g9RUrK6TIZgyP9Xl", fecha: "Corregir" },
-    "001": { id: "1Wstzn2KHzMTQ-2rRsxPuXDzbv9lYMihp", fecha: "Corregir" },
-    "002": { id: "1KL8LemG38fu9ajqpSnuUJw5hn1kH0a5q", fecha: "Corregir" },
-    "003": { id: "1m5Gk2Fmkvy7_h_vE5Ps7IEgFGbM9bmAt", fecha: "Corregir" },
-    "004": { id: "194KSCKousNFJJE_rEtFMek5stk4_lNiN", fecha: "Corregir" },
-    "005": { id: "1913nbMo2Lrq4wIsduXwIx3pg7dmFVXoD", fecha: "Corregir" },
-    "006": { id: "12Lt6xr7TcVm-NRp_vcWpYeW2_b8_4iMA", fecha: "Corregir" },
-    "007": { id: "1Sd8heiUPoO38a7ut3UTPhTU0NretnBgl", fecha: "Corregir" },
-    "008": { id: "1CKyxhezCRCCvew8ZF2eaQne8Yskx3PHg", fecha: "Corregir" },
-    "009": { id: "1yJmFPPXcnnes-QDB4UL2nfxio-17GrvA", fecha: "Corregir" },
-    "010": { id: "1ueZxfzSySu5UVvP9eFdiaZk8pwd2WIvD", fecha: "Corregir" },
-    "011": { id: "1ZnfTVOHLCuT9z8sBtWk0dOFy35uFVKra", fecha: "Corregir" },
-    "012": { id: "120znYSX5G9vZn-zl4ZZ24HiPrHA2qK7l", fecha: "Corregir" },
-    "013": { id: "1ThZNbQBow6iXpS1KPsEvt1gLYPQO5JiZ", fecha: "Corregir" },
-    "014": { id: "1QcHftOu-Lyk_mMiq8z66O4puRVcuCW0m", fecha: "Corregir" },
-    "015": { id: "1TRSxadgMhsjCGCR5YpfWpV-h-qAGihjJ", fecha: "Corregir" },
-    "016": { id: "10nKf-3AJKArFAAK45b3yrJPuIGiBdxok", fecha: "Corregir" },
-    "017": { id: "1D90H3OLr3mAk0Kw9x1PzAZ5O_Nt7Yf_6", fecha: "Corregir" },
-    "018": { id: "1XJsnnLDqx-Tl5LH09JMFRkIwYIUd4wkU", fecha: "Corregir" },
-    "019": { id: "1hqMr4ndn5M4qAPDWHW1DdzkKiM1BRAFg", fecha: "Corregir" },
-    "020": { id: "121iiphR9jzPNnVoeOxrLUbrSTvFiQa2b", fecha: "Corregir" },
-    "021": { id: "1nYr91y6H4ghfW_tzVRQCv-U7v8KNBkGV", fecha: "Corregir" },
-    "022": { id: "1cCfrEnmSqSkyf6OXYyGtAffpnIREDfqC", fecha: "Corregir" },
-    "023": { id: "1sWCj7xQMz0im9o5ZGsRmIWYy5NCGIsOv", fecha: "Corregir" },
-    "024": { id: "1ZpTF-Jy2AM7Mr4P-QLMIDraFDEo1Z5Fz", fecha: "Corregir" },
-    "025": { id: "15SfwvXHENK7MLsAB_tHlmyBdWZJ9w5-a", fecha: "Corregir" },
-    "026": { id: "1fLRdFTzn26_cqGYvGcQ56g2jdikYnOfg", fecha: "Corregir" },
-    "027": { id: "1NFaSNbB5xg0dpwShv_AD3AAJeQ-H1XJv", fecha: "Corregir" },
-    "028": { id: "1Ha8-pqyhp1ZBW8oBgtp9RMHxncjmb69l", fecha: "Corregir" },
-    "029": { id: "1TPDBBjwGFvm6ZuKj-EMtui-cLZ7AK7iM", fecha: "Corregir" },
-    "030": { id: "1l1pYEdKCh6WWzzrt-ZsNnVCYyRAqzTUi", fecha: "Corregir" },
-    "031": { id: "1khUolM9gf6whR9fy0euna_kTasYgq3Uh", fecha: "Corregir" },
-    "032": { id: "19I1TradGk0blHwxd9UzxywZ27bmsgj5S", fecha: "Corregir" },
-    "033": { id: "12jGSC8vU811-IOGwefyE5TaltelNYtxd", fecha: "Corregir" },
-    "034": { id: "1WLd-dSHH0EMd6cKSoHrC4SNaxsNAO6s7", fecha: "Corregir" },
-    "035": { id: "1xC1_DtW0YU0InUXtFUxt2xqQJAGXMTSw", fecha: "Corregir" },
-    "036": { id: "1aWkn4YyJ7Y0z0xWWnQUHGWCj5tpPjah2", fecha: "Corregir" },
-    "037": { id: "1uCdkwdkkHAIf1A8Or0orUYCB2lWcOxBU", fecha: "Corregir" },
-    "038": { id: "1CjHCpxdndrpCENHilZtW3ZFEDaOQa_tn", fecha: "Corregir" },
-    "039": { id: "1A17KLg4slpNcG-HXELoyyrQ2xri8qyCm", fecha: "Corregir" },
-    "040": { id: "1bymsri2rXFBSZdDEC6j2XAOdBdpv5PqD", fecha: "Corregir" },
-    "041": { id: "1_R_ldfglPg0xU1BkPAN4km60L8qpmwBI", fecha: "Corregir" },
-    "042": { id: "18xCSxxll67cH2TDpJOkTqeTRLsFMgH0I", fecha: "Corregir" },
-    "043": { id: "1Ojga-4303tNiSWd2-zLTlUPrp1rPg3f7", fecha: "Corregir" },
-    "044": { id: "1j0L_dK6P4-XvpMHe2z5HKma4o4iHAJ2D", fecha: "Corregir" },
-    "045": { id: "18q6N6cA4iybVbbfg2TryGwcjt6Ttsa0U", fecha: "Corregir" },
-    "046": { id: "1FGAv7aMREEiEjYfRKTuQhTWGycKqAJ7K", fecha: "Corregir" },
-    "047": { id: "11tWCLodY79OYhcmdDhWJG5qxslBswgJ7", fecha: "Corregir" },
-    "048": { id: "1vhzutjQcJ0G0b_SpOZ2hbdisqpIfc-nL", fecha: "Corregir" },
-    "049": { id: "19VUWaHU74QybDeprs5q8ePMAV3Y-BAlF", fecha: "Corregir" },
-    "050": { id: "14ufx_bVYcQ9wqKiI8qEbZoyfeedmsabw", fecha: "Corregir" },
-    "051": { id: "1wAiWFqGk5cUgB1GFauL3zfqt4yWTH7aU", fecha: "Corregir" },
-    "052": { id: "11-VGFTIz_tPlDd0Iqq9c8Wb49epESrIb", fecha: "Corregir" },
-    "053": { id: "1k9wRSxvN_5Od3-lB39KmSNT1xfuPrg9S", fecha: "Corregir" },
-    "054": { id: "1fk-hQ9rSLCHjT3gqk3n2No3wH4VKPq2e", fecha: "Corregir" },
-    "055": { id: "1IF_7kZCmoj6J4jwD3YjaPXCHDOhV3WrR", fecha: "Corregir" },
-    "056": { id: "17fnqSOGQtASbTUEwXXkkGLJ7wl83ClvA", fecha: "Corregir" },
-    "057": { id: "1K5HGnuL6pGWopvMguRBU9Qof6KGsSrEq", fecha: "Corregir" },
-    "058": { id: "1JQlaupsx4XAAIrlymlEvtCTL7RxfH0xV", fecha: "Corregir" },
-    "059": { id: "1zxa1JCkA4yQ5iNM7T_fyBg0SdPng5pll", fecha: "Corregir" },
-    "060": { id: "1np5XOgfTUEntLx5Iiwb4grbHYu7dUbDg", fecha: "Corregir" },
-    "061": { id: "1azRo2QZDWJh3vy6KuRjicYueqFq6U6nu", fecha: "Corregir" },
-    "062": { id: "1GjemUhkh-E9vJrn6J-CqbUj88w1Bj5gY", fecha: "Corregir" },
-    "063": { id: "1settJWBWjmvIyC-bv-StQSOAwAI-LBlk", fecha: "Corregir" },
-    "064": { id: "1X64NSSED-uL9jxecEDCDRZAStEG0_jJp", fecha: "Corregir" },
-    "065": { id: "1dP3Dfl2sErzE5_FIaJ1St7cAG0tZiBD8", fecha: "Corregir" },
-    "066": { id: "1w2ZjDywDlcdEv6LheiBkBVyGf9NJgjuL", fecha: "Corregir" },
-    "067": { id: "1pguLx641hDUzCSmvnmATJdbbgPLN30eP", fecha: "10/03/2026" },
-    "068": { id: "1b0wAHkiIKB3QBJ9EwILMSJfdxaAUUAUk", fecha: "10/03/2026" },
-    "069": { id: "1IDi2jiPertNph6l2vXEUvUMF3CwhJ4SF", fecha: "15/03/2026" },
-  };
-
-  // ══════════════════════════════════════════════
-  // ⭐ HIPERCAPICÚAS — formato: "LL NNN LL"
-  // Para agregar: { patente: "AB 123 CD", id: "ID_DRIVE", fecha: "DD/MM/AAAA" }
-  // ══════════════════════════════════════════════
-  const HIPERS = [
-    { patente: "AG 363 GA", id: "1t3znhHraX1eF3Ck5cWfqng57XvEzedTz", fecha: "30/03/2025" },
-    { patente: "AF 282 FA", id: "1x1g3c0pSBiOi6dKr9w11I34yu0ew3elQ", fecha: "05/04/2025" },
-    { patente: "AA 171 AA", id: "1LuSa6Pnh0MjoYltz3M06TFmvfvumukme", fecha: "09/06/2025" },
-  ];
+  let PATENTES = {};
+  let HIPERS = [];
 
   function imgUrl(driveId) {
     return `https://drive.google.com/thumbnail?id=${driveId}&sz=w1000`;
@@ -933,7 +854,26 @@
   }
 
   // ══ Init ══
-  render();
+  // Cache-buster para que GitHub Pages no sirva un data.json viejo desde cache.
+  fetch(`data.json?t=${Date.now()}`)
+    .then(r => r.json())
+    .then(data => {
+      PATENTES = data.PATENTES || {};
+      HIPERS   = data.HIPERS   || [];
+      render();
+      renderFooter();
+    })
+    .catch(err => {
+      document.getElementById("grid").innerHTML =
+        `<div class="empty-state">No se pudo cargar data.json 😕</div>`;
+      console.error(err);
+    });
+
+  function renderFooter() {
+    const found = Object.keys(PATENTES).length;
+    document.getElementById("footer-msg").textContent =
+      `${found} de 1000. El camino es largo, las calles son infinitas y las chances parecen imposibles pero cada patente encontrada es una victoria. No importa cuánto falte: no paramos hasta completar el álbum, Matias Chiffone Guarde. 🚗`;
+  }
 </script>
 
 <footer style="
@@ -951,12 +891,6 @@
   <span id="footer-msg"></span>
 </footer>
 
-<script>
-  const found = Object.keys(PATENTES).length;
-  const pct   = ((found / 1000) * 100).toFixed(1);
-  document.getElementById("footer-msg").textContent =
-    `${found} de 1000. El camino es largo, las calles son infinitas y las chances parecen imposibles pero cada patente encontrada es una victoria. No importa cuánto falte: no paramos hasta completar el álbum, Matias Chiffone Guarde. 🚗`;
-</script>
 <script>
   let addTipo = "normal";
   function setTipo(t) {
@@ -997,11 +931,11 @@
     if (!id) { alert("El link de Drive no parece válido."); return; }
     let linea, instruccion;
     if (addTipo === "normal") {
-      linea = '"' + num.padStart(3,"0") + '": { id: "' + id + '", fecha: "' + fecha + '" },';
-      instruccion = 'Pegá esta línea dentro de <strong>const PATENTES = { ... }</strong>';
+      linea = '"' + num.padStart(3,"0") + '": { "id": "' + id + '", "fecha": "' + fecha + '" },';
+      instruccion = 'Pegá esta línea dentro de <strong>"PATENTES": { ... }</strong> en data.json';
     } else {
-      linea = '{ patente: "' + num + '", id: "' + id + '", fecha: "' + fecha + '" },';
-      instruccion = 'Pegá esta línea dentro de <strong>const HIPERS = [ ... ]</strong>';
+      linea = '{ "patente": "' + num + '", "id": "' + id + '", "fecha": "' + fecha + '" },';
+      instruccion = 'Pegá esta línea dentro de <strong>"HIPERS": [ ... ]</strong> en data.json';
     }
     document.getElementById("add-resultado-code").textContent = linea;
     document.getElementById("add-instruccion").innerHTML = instruccion;
