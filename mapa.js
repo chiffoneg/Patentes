@@ -474,10 +474,16 @@
   let z = 1, tx = 0, ty = 0, fitZ = 1;
   let suppressClick = false;
 
+  // Se dibuja como mucho una vez por cuadro de pantalla (el dedo manda muchos más eventos).
+  let rafId = 0;
   function apply() {
-    const inner = $("mp-inner");
-    inner.style.transform = `translate(${tx}px, ${ty}px) scale(${z})`;
-    inner.style.setProperty("--z", z);
+    if (rafId) return;
+    rafId = requestAnimationFrame(() => {
+      rafId = 0;
+      const inner = $("mp-inner");
+      inner.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${z})`;
+      inner.style.setProperty("--z", z);
+    });
   }
   function clampPan() {
     const map = $("mp-map");
@@ -508,9 +514,7 @@
     inner.style.transition = "transform 0.35s ease";
     clampPan();
     apply();
-    setTimeout(() => (inner.style.transition = ""), 360);
-    const hh = document.querySelector("header").offsetHeight;
-    window.scrollTo({ top: map.getBoundingClientRect().top + window.scrollY - hh - 8, behavior: "smooth" });
+    setTimeout(() => (inner.style.transition = ""), 400);
   }
   function initialView() {
     computeFit();
@@ -644,7 +648,7 @@
       <div class="mp-map" id="mp-map">
         <div class="mp-loading" id="mp-loading">Cargando plano…</div>
         <div class="mp-inner" id="mp-inner">
-          <img id="mp-img" alt="Plano de Santa Bárbara"/>
+          <img id="mp-img" alt="Plano de Santa Bárbara" decoding="async" draggable="false"/>
           <div id="mp-markers"></div>
         </div>
         <div class="mp-banner" id="mp-banner"><span id="mp-banner-txt"></span><button id="mp-banner-x">Cancelar</button></div>
