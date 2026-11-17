@@ -1,0 +1,179 @@
+/* ══ Pestaña MAPA (Santa Bárbara) ══ — todo con prefijo mp- para no chocar con el álbum */
+
+/* ── Pestañas en el header ── */
+.mp-tabs { display: flex; gap: 6px; }
+.mp-tab {
+  padding: 7px 14px; border-radius: 9px;
+  border: 2px solid rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.25); color: #fff;
+  font: 800 0.85rem 'Nunito', sans-serif; cursor: pointer;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  transition: all 0.18s;
+}
+.mp-tab:hover { background: rgba(255,255,255,0.45); }
+.mp-tab.active { background: #fff; color: #1a2340; border-color: #fff; text-shadow: none; }
+
+/* ── Mostrar / ocultar vistas ── */
+#vista-mapa { display: none; }
+body.modo-mapa #vista-mapa { display: flex; }
+body.modo-mapa header .controls,
+body.modo-mapa main,
+body.modo-mapa > footer { display: none; }
+
+#vista-mapa { flex-direction: column; color: #1a2340; }
+
+/* ── Barra de herramientas ── */
+.mp-toolbar { padding: 14px 24px 0; display: flex; flex-direction: column; gap: 8px; }
+.mp-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.mp-search {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.92); border-radius: 12px; padding: 6px 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.mp-search span { font-weight: 800; font-size: 0.8rem; color: #8899bb; white-space: nowrap; }
+.mp-search input {
+  border: none; background: transparent; outline: none; width: 58px;
+  font: 1.5rem 'Bebas Neue', cursive; letter-spacing: 3px; color: #1a2340;
+}
+.mp-search input::placeholder { color: #c3cce0; }
+.mp-search.lote input { width: 60px; font-size: 1.25rem; }
+.mp-next {
+  padding: 9px 12px; border-radius: 12px; border: none; cursor: pointer;
+  background: #1a2340; color: #fff; font: 800 0.82rem 'Nunito', sans-serif; white-space: nowrap;
+}
+.mp-next b { color: #7fff6e; font: 400 1.1rem 'Bebas Neue', cursive; letter-spacing: 1px; }
+.mp-sync {
+  margin-left: auto; padding: 7px 12px; border-radius: 99px;
+  background: rgba(255,255,255,0.3); color: #fff; font-weight: 800; font-size: 0.78rem;
+  border: 1.5px solid rgba(255,255,255,0.5); white-space: nowrap;
+}
+.mp-sync.offline { background: #ffd36e; color: #1a2340; border-color: #ffd36e; }
+.mp-sync.busy { background: #fff; color: #1a2340; border-color: #fff; }
+.mp-sync.error { background: #ff7c6e; color: #1a2340; border-color: #ff7c6e; }
+.mp-result {
+  background: rgba(255,255,255,0.92); border-radius: 12px; padding: 9px 14px;
+  font-weight: 700; font-size: 0.9rem; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+}
+.mp-lot-link {
+  border: none; cursor: pointer; border-radius: 8px; padding: 4px 10px;
+  background: #7fff6e; color: #1a2340; font: 800 0.85rem 'Nunito', sans-serif;
+  box-shadow: 0 0 0 2px #3edb2a inset;
+}
+.mp-have { color: #1a6b10; }
+
+/* ── Mapa ── */
+.mp-map {
+  position: relative; min-height: 360px;
+  height: calc(100dvh - var(--mp-hh, 80px) - 24px);
+  margin: 12px 24px 16px; border-radius: 16px; overflow: hidden;
+  background: #fff; box-shadow: 0 4px 18px rgba(0,0,0,0.15);
+  touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none;
+}
+.mp-map.dragging { cursor: grabbing; }
+.mp-map.picking { cursor: crosshair; outline: 4px solid #ffd36e; }
+.mp-inner { position: absolute; left: 0; top: 0; transform-origin: 0 0; --z: 1; }
+.mp-inner img { display: block; pointer-events: none; -webkit-user-drag: none; }
+.mp-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #8899bb; }
+
+.mp-marker {
+  position: absolute; transform: translate(-50%, -50%) scale(calc(1 / var(--z)));
+  min-width: 22px; height: 22px; padding: 0 6px; border-radius: 99px;
+  border: 2px solid #fff; background: #1a2340; color: #fff;
+  font: 800 12px/18px 'Nunito', sans-serif; text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3); pointer-events: none;
+}
+.mp-marker.hit {
+  background: #7fff6e; color: #1a2340; border-color: #1a2340; z-index: 2;
+  animation: mp-pulse 1.4s ease-out infinite;
+}
+.mp-marker.sel { z-index: 3; outline: 3px solid #ff7c6e; outline-offset: 2px; }
+.mp-marker.sel.empty { background: rgba(255,124,110,0.25); border-color: #ff7c6e; min-width: 30px; height: 30px; }
+@keyframes mp-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(62,219,42,0.85); }
+  100% { box-shadow: 0 0 0 16px rgba(62,219,42,0); }
+}
+.mp-zoom { position: absolute; right: 10px; top: 10px; display: flex; flex-direction: column; gap: 6px; z-index: 5; }
+.mp-zoom button {
+  width: 40px; height: 40px; border-radius: 10px; border: none; cursor: pointer;
+  background: #1a2340; color: #fff; font-size: 1.2rem; font-weight: 800; box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+}
+.mp-legend {
+  position: absolute; left: 10px; bottom: 10px; z-index: 5;
+  background: rgba(255,255,255,0.94); border-radius: 10px; padding: 6px 10px;
+  font-size: 0.72rem; font-weight: 700; display: flex; gap: 10px; flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12); pointer-events: none;
+}
+.mp-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 99px; vertical-align: -2px; margin-right: 4px; border: 2px solid #fff; }
+.mp-banner {
+  position: absolute; left: 50%; top: 10px; transform: translateX(-50%); z-index: 6;
+  background: #ffd36e; color: #1a2340; border-radius: 10px; padding: 8px 12px;
+  font-weight: 800; font-size: 0.82rem; display: none; gap: 8px; align-items: center; box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+  max-width: calc(100% - 80px);
+}
+.mp-banner.show { display: flex; }
+.mp-banner button { border: none; background: #1a2340; color: #fff; border-radius: 8px; padding: 4px 8px; font-weight: 800; cursor: pointer; }
+
+/* ── Hoja del lote ── */
+.mp-sheet {
+  position: fixed; left: 50%; bottom: 0; z-index: 400;
+  width: min(480px, 100%); transform: translate(-50%, 110%);
+  background: #fff; border-radius: 20px 20px 0 0; padding: 10px 18px 22px;
+  box-shadow: 0 -8px 30px rgba(0,0,0,0.25);
+  transition: transform 0.28s cubic-bezier(.4,0,.2,1);
+}
+.mp-sheet.open { transform: translate(-50%, 0); }
+.mp-grip { width: 44px; height: 5px; border-radius: 99px; background: #d4dbec; margin: 0 auto 10px; }
+.mp-sheet-head { display: flex; align-items: center; justify-content: space-between; }
+.mp-sheet-head h2 { font: 400 2rem 'Bebas Neue', cursive; letter-spacing: 2px; color: #1a2340; }
+.mp-x { border: none; background: #eef2fb; width: 34px; height: 34px; border-radius: 99px; cursor: pointer; font-weight: 800; color: #1a2340; }
+.mp-sub { font-size: 0.82rem; color: #6a7899; font-weight: 700; margin-bottom: 10px; }
+.mp-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.mp-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #eef2fb; border-radius: 10px; padding: 6px 12px; color: #1a2340;
+  font: 400 1.35rem 'Bebas Neue', cursive; letter-spacing: 2px;
+}
+.mp-chip.hit { background: #7fff6e; box-shadow: 0 0 0 2px #3edb2a inset; }
+.mp-chip.have { color: #8899bb; }
+.mp-chip small { font: 700 0.65rem 'Nunito', sans-serif; letter-spacing: 0; color: #6a7899; }
+.mp-chip button { border: none; background: rgba(26,35,64,0.12); border-radius: 99px; width: 22px; height: 22px; cursor: pointer; font-weight: 800; font-size: 0.7rem; color: #1a2340; }
+.mp-empty { color: #8899bb; font-weight: 700; font-size: 0.9rem; }
+.mp-add { display: flex; gap: 8px; }
+.mp-add input {
+  flex: 1; min-width: 0; border: 2px solid #d4dbec; border-radius: 12px; padding: 8px 12px; outline: none; color: #1a2340;
+  font: 1.5rem 'Bebas Neue', cursive; letter-spacing: 3px;
+}
+.mp-add input:focus { border-color: #6e97ff; }
+.mp-btn {
+  border: none; border-radius: 12px; padding: 10px 18px; cursor: pointer;
+  background: #6e97ff; color: #fff; font: 800 0.95rem 'Nunito', sans-serif; white-space: nowrap;
+}
+.mp-btn.ghost { background: #eef2fb; color: #1a2340; }
+.mp-links { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
+.mp-links button { border: none; background: none; color: #6a7899; font: 700 0.8rem 'Nunito', sans-serif; cursor: pointer; padding: 0; text-decoration: underline; }
+.mp-locked { background: #f4f6fc; border-radius: 12px; padding: 12px; font-size: 0.88rem; font-weight: 700; color: #6a7899; display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+
+/* ── Modal clave ── */
+.mp-overlay { position: fixed; inset: 0; background: rgba(20,40,100,0.55); backdrop-filter: blur(6px); z-index: 600; display: none; align-items: center; justify-content: center; padding: 16px; }
+.mp-overlay.open { display: flex; }
+.mp-modal { background: #fff; border-radius: 18px; padding: 22px; width: min(420px, 100%); box-shadow: 0 16px 48px rgba(0,0,0,0.25); color: #1a2340; }
+.mp-modal h3 { font: 400 1.8rem 'Bebas Neue', cursive; letter-spacing: 2px; margin-bottom: 6px; }
+.mp-modal p { font-size: 0.86rem; color: #4a5878; margin-bottom: 12px; line-height: 1.45; }
+.mp-modal input { width: 100%; border: 2px solid #d4dbec; border-radius: 12px; padding: 10px 12px; font: 700 0.95rem 'Nunito', sans-serif; margin-bottom: 8px; outline: none; }
+.mp-modal .mp-err { color: #b43a2c; font-weight: 800; font-size: 0.82rem; min-height: 1.2em; margin-bottom: 8px; }
+.mp-modal .mp-row { justify-content: flex-end; }
+
+.mp-toast {
+  position: fixed; left: 50%; top: 90px; transform: translate(-50%, -20px); opacity: 0;
+  background: #1a2340; color: #fff; padding: 10px 16px; border-radius: 12px; z-index: 700;
+  font-weight: 700; font-size: 0.88rem; transition: all 0.25s; pointer-events: none; max-width: calc(100% - 32px); text-align: center;
+}
+.mp-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 600px) {
+  body.modo-mapa header .progress-wrap { display: none; }
+  body.modo-mapa header { padding: 12px 16px; }
+  .mp-toolbar { padding: 12px 12px 0; }
+  .mp-map { margin: 10px 12px 12px; }
+  .mp-sync { margin-left: 0; }
+}

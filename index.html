@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cazador de Patentes</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="mapa.css" rel="stylesheet"/>
   <style>
     :root {
       --bg: #6e97ff;
@@ -506,6 +507,10 @@
 <header>
   <div class="header-top">
     <div class="title">Cazador de <span>Patentes</span></div>
+    <nav class="mp-tabs">
+      <button class="mp-tab active" data-vista="album">📷 Álbum</button>
+      <button class="mp-tab" data-vista="mapa">🗺️ Mapa</button>
+    </nav>
     <div class="progress-wrap">
       <span class="progress-label" id="progress-label">0 / 1000</span>
       <div class="progress-bar-bg">
@@ -552,6 +557,9 @@
 <main>
   <div id="grid"><div class="empty-state">Cargando álbum…</div></div>
 </main>
+
+<!-- PESTAÑA MAPA (la arma mapa.js) -->
+<div id="vista-mapa"></div>
 
 <script>
   // ══════════════════════════════════════════════
@@ -957,5 +965,6 @@
     if (e.target === e.currentTarget) document.getElementById("panel-overlay").classList.remove("open");
   });
 </script>
+<script src="mapa.js"></script>
 </body>
 </html>
